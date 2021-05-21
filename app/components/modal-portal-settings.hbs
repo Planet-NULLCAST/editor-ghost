@@ -1,0 +1,253 @@
+<div class="modal-body gh-ps-modal-body">
+    <div class="flex pa0 flex-grow-1 gh-portal-settings">
+        <div class="gh-portal-settings-sidebar">
+            <h2 class="gh-portal-settings-title">Portal settings</h2>
+            <div class="gh-portal-form-wrapper">
+                <fieldset class="gh-portal-settings-form">
+                    <div class="gh-portal-setting-section {{if (not-eq this.settings.membersSignupAccess "all") "disabled-overlay"}}" onclick={{action "switchToSignupPage"}}>
+                        <h3 class="gh-portal-setting-sectionheading">Signup options</h3>
+                        <GhFormGroup @classNames="gh-members-subscribed-checkbox gh-portal-setting-first pb5 mb0">
+                            <div class="flex justify-between items-center">
+                                <div class="mr3">
+                                    <h4 class="gh-portal-setting-title">Display name in signup form</h4>
+                                </div>
+                                <div class="for-switch small">
+                                    <label
+                                        class="switch"
+                                        for="signup-name-checkbox"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={{this.settings.portalName}}
+                                            id="signup-name-checkbox"
+                                            name="signup-name-checkbox"
+                                            disabled={{not-eq this.settings.membersSignupAccess "all"}}
+                                            {{on "click" (action "togglePortalName" value="target.checked")}}
+                                        >
+                                        <span class="input-toggle-component"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </GhFormGroup>
+                        {{#if this.isStripeConfigured}}
+                        <div>
+                            <div class="mb3">
+                                <h4 class="gh-portal-setting-title">Prices available at signup</h4>
+                            </div>
+                            <div class="form-group mb0 for-checkbox">
+                                <label
+                                    class="checkbox"
+                                    for="free-plan"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={{this.isFreeChecked}}
+                                        id="free-plan"
+                                        name="free-plan"
+                                        disabled={{or (not this.isStripeConfigured) (not-eq this.settings.membersSignupAccess "all")}}
+                                        class="gh-input post-settings-featured"
+                                        {{on "click" (action "toggleFreePlan" value="target.checked")}}
+                                        data-test-checkbox="featured"
+                                    >
+                                    <span class="input-toggle-component"></span>
+                                    <p>Free</p>
+                                </label>
+                            </div>
+                            {{#if this.prices}}
+                                {{#each this.filteredPrices as |price|}}
+                                    <div class="form-group mb0 for-checkbox">
+                                        <label class="checkbox" for="{{price.id}}">
+                                            <input
+                                                type="checkbox"
+                                                checked={{price.checked}}
+                                                id={{price.id}}
+                                                name={{price.id}}
+                                                disabled={{or
+                                                    (not this.isStripeConfigured)
+                                                    (not-eq this.settings.membersSignupAccess "all")
+                                                }}
+                                                class="gh-input post-settings-featured"
+                                                data-test-checkbox="featured"
+                                                {{on "click" (action "togglePlan" price.id)}}
+                                            />
+                                            <span class="input-toggle-component"></span>
+                                            <p>{{price.nickname}}</p>
+                                        </label>
+                                    </div>
+                                {{/each}}
+                            {{/if}}
+                        </div>
+                        {{else}}
+                        <div class="gh-portal-setting-no-stripe">
+                            You need to <button class="gh-btn gh-btn-link black" {{action "openStripeSettings"}}>connect to Stripe</button> to take payments
+                        </div>
+                        {{/if}}
+                    </div>
+                    <div class="gh-portal-setting-section" onclick={{action "switchToSignupPage"}}>
+                        <h3 class="gh-portal-setting-sectionheading">Look & feel</h3>
+                        <GhFormGroup @classNames="gh-members-subscribed-checkbox gh-portal-setting-first mb0 b--whitegrey">
+                            <div class="flex justify-between items-center">
+                                <h4 class="gh-portal-setting-title">Show Portal button</h4>
+                                <div class="for-switch small">
+                                    <label
+                                        class="switch"
+                                        for="portal-button-checkbox"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={{this.settings.portalButton}}
+                                            id="portal-button-checkbox"
+                                            name="portal-button-checkbox"
+                                            onclick={{action "togglePortalButton" value="target.checked"}}
+                                        >
+                                        <span class="input-toggle-component"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </GhFormGroup>
+                        {{#if this.settings.portalButton}}
+                            <div class="mt5">
+                                <GhFormGroup @classNames="space-l">
+                                    <h4 class="gh-portal-setting-title mb1">Portal button style</h4>
+                                    <span
+                                        class="gh-select mt2"
+                                        data-select-text="test"
+                                        tabindex="0"
+                                    >
+                                        <OneWaySelect
+                                            @id="portal-button-style"
+                                            @name="portal[button-style]"
+                                            @options={{this.buttonStyleOptions}}
+                                            @optionValuePath="name"
+                                            @optionLabelPath="label"
+                                            @value={{this.selectedButtonStyle}}
+                                            @update={{action "setButtonStyle"}}
+                                        />
+                                        {{svg-jar "arrow-down-small"}}
+                                    </span>
+                                </GhFormGroup>
+                                {{#if showIconSetting}}
+                                    <GhFormGroup @classNames="space-l">
+                                        <h4 class="gh-portal-setting-title">Icon</h4>
+                                        <GhUploader
+                                            @extensions={{this.iconExtensions}}
+                                            @paramsHash={{hash purpose="image"}}
+                                            @onComplete={{action "imageUploaded" "buttonIcon"}}
+                                            as
+                                            |uploader|
+                                        >
+                                            <div class="flex items-center justify-between mt2 br3 ba b--whitegrey bg-white">
+                                                <div class="gh-portal-settings-icons">
+                                                    {{#each this.defaultButtonIcons as |imgIcon| }}
+                                                        <span class="gh-portal-button-icon {{if (eq this.buttonIcon imgIcon.value) "selected-icon"}}" onclick={{action "selectDefaultIcon" imgIcon.value}}>
+                                                            {{svg-jar imgIcon.icon}}
+                                                        </span>
+                                                    {{/each}}
+                                                </div>
+                                                <div class="flex gh-setting-action gh-portal-custom-icon">
+                                                    {{#if uploader.isUploading}}
+                                                        <div class="gh-portal-button-icon">
+                                                            <div class="gh-loading-spinner"></div>
+                                                        </div>
+                                                    {{else if this.customIcon}}
+                                                        <img
+                                                            class="gh-portal-button-icon gh-portal-button-custom {{if (eq this.buttonIcon this.customIcon) "selected-icon"}}"
+                                                            src="{{this.customIcon}}"
+                                                            onclick={{action "selectDefaultIcon" this.customIcon}}
+                                                            alt="icon"
+                                                            data-test-icon-img
+                                                        >
+                                                        {{#if (eq this.buttonIcon this.customIcon)}}
+                                                        <button type="button" class="gh-btn gh-btn-hover-red gh-portal-button-deleteicon" {{action "deleteCustomIcon"}}>
+                                                            <span> {{svg-jar "trash" class="w5 h5"}} </span>
+                                                        </button>
+                                                        {{/if}}
+                                                    {{else}}
+                                                        <button type="button" class="gh-btn gh-portal-button-uploadicon" onclick={{action "triggerFileDialog"}} data-test-image-upload-btn="icon" data-tooltip="Upload icon">
+                                                            <span>{{svg-jar "upload-fill" class="w5 h5"}}</span>
+                                                        </button>
+                                                        <div style="display:none">
+                                                            <GhFileInput
+                                                                @multiple={{false}}
+                                                                @action={{uploader.setFiles}}
+                                                                @accept={{this.iconMimeTypes}}
+                                                                data-test-file-input="icon"
+                                                            />
+                                                        </div>
+                                                    {{/if}}
+                                                </div>
+                                            </div>
+                                        </GhUploader>
+
+                                    </GhFormGroup>
+                                {{/if}}
+                            </div>
+                            {{#if showButtonTextSetting}}
+                            <GhFormGroup @classNames="space-l">
+                                <h4 class="gh-portal-setting-title">Signup button text</h4>
+
+                                <div class="flex items-center mt2">
+                                    <GhTextInput
+                                        @value={{readonly this.settings.portalButtonSignupText}}
+                                        @type="text"
+                                        @input={{action "setSignupButtonText"}}
+                                    />
+                                </div>
+                            </GhFormGroup>
+                            {{/if}}
+                        {{/if}}
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        <div class="gh-portal-settings-main">
+            <div class="gh-portal-settings-previewheader">
+
+                <div class="gh-btn-group">
+                    <a class="gh-btn {{if (eq this.page "signup") "gh-btn-group-selected"}}" href="#" {{action "switchPreviewPage" "signup"}} data-test-link="switch-portal-preview-page"><span>Signup</span></a>
+                    <a class="gh-btn {{if (eq this.page "accountHome") "gh-btn-group-selected"}}" href="#" {{action "switchPreviewPage" "accountHome"}} data-test-link="switch-portal-preview-page"><span>Account</span></a>
+                    <a class="gh-btn {{if this.showLinksPage "gh-btn-group-selected"}}" href="#" {{action "switchPreviewPage" "links"}} data-test-link="switch-portal-preview-page"><span>Links</span></a>
+                </div>
+
+                <div class="gh-portal-settings-actions">
+                    <button
+                        class="gh-btn mr3"
+                        {{action "closeModal"}}
+                        {{!-- disable mouseDown so it doesn't trigger focus-out validations --}}
+                        {{on "mousedown" (optional this.noop)}}
+                        data-test-button="cancel-custom-view-form"
+                    >
+                        <span>Cancel</span>
+                    </button>
+
+                    <GhTaskButton
+                        @buttonText="Save and close"
+                        @successText="Saved"
+                        @task={{this.saveTask}}
+                        @idleClass="gh-btn-primary"
+                        @class="gh-btn gh-btn-icon"
+                        data-test-button="save-members-modal-setting"
+                    />
+                </div>
+            </div>
+
+            {{#if this.showLinksPage}}
+            <div class="gh-portal-preview-wrapper">
+                <div class="gh-portal-preview-container">
+                    <GhPortalLinks />
+                </div>
+            </div>
+            {{/if}}
+
+            <div class="gh-portal-preview-container {{if this.showLinksPage "hide"}}">
+                <div class="gh-portal-site-frame-cover"> </div>
+                <GhSiteIframe
+                    @guid="portal-preview-site"
+                    @src={{this.portalPreviewUrl}}
+                    @classNames="gh-portal-siteiframe {{if this.hidePreviewFrame "invisible"}}"
+                ></GhSiteIframe>
+            </div>
+
+        </div>
+    </div>
+</div>

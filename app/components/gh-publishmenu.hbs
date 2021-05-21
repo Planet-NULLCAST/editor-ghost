@@ -1,0 +1,74 @@
+<GhBasicDropdown @verticalPosition="below" @onOpen={{action "open"}} @onClose={{action "close"}} as |dd|>
+    <dd.Trigger class="gh-btn gh-btn-editor {{if (or (eq this.displayState "published") (eq this.displayState "scheduled") (eq this.uiContext "preview")) "green"}} gh-publishmenu-trigger">
+        <span data-test-publishmenu-trigger>{{this.triggerText}} {{svg-jar "arrow-down"}}</span>
+    </dd.Trigger>
+
+    <dd.Content class="gh-publishmenu-dropdown">
+        {{#if (eq this.displayState "published")}}
+            <GhPublishmenuPublished
+                @post={{this.post}}
+                @saveType={{this.saveType}}
+                @setSaveType={{action "setSaveType"}} />
+
+        {{else if (eq this.displayState "scheduled")}}
+            <GhPublishmenuScheduled
+                @post={{this.post}}
+                @saveType={{this.saveType}}
+                @isClosing={{this.isClosing}}
+                @canSendEmail={{this.canSendEmail}}
+                @recipientsSegment={{this.sendEmailWhenPublished}}
+                @setSaveType={{action "setSaveType"}}
+                @setTypedDateError={{action (mut this.typedDateError)}}
+                @isSendingEmailLimited={{this.isSendingEmailLimited}}
+                @sendingEmailLimitError={{this.sendingEmailLimitError}} />
+
+        {{else}}
+            <GhPublishmenuDraft
+                @post={{this.post}}
+                @saveType={{this.saveType}}
+                @setSaveType={{action "setSaveType"}}
+                @setTypedDateError={{action (mut this.typedDateError)}}
+                @canSendEmail={{this.canSendEmail}}
+                @recipientsSegment={{this.sendEmailWhenPublished}}
+                @updateMemberCount={{action "updateMemberCount"}}
+                @setSendEmailWhenPublished={{action "setSendEmailWhenPublished"}}
+                @isSendingEmailLimited={{this.isSendingEmailLimited}}
+                @sendingEmailLimitError={{this.sendingEmailLimitError}} />
+        {{/if}}
+
+        {{!--
+            save button needs to be outside of menu components so it doesn't lose state
+            or cancel the task when the post status updates and switches components
+         --}}
+        <footer class="gh-publishmenu-footer">
+            <button class="gh-btn gh-btn-outline" {{on "click" (action dd.actions.close)}} data-test-publishmenu-cancel>
+                <span>Cancel</span>
+            </button>
+            <GhTaskButton
+                @buttonText={{this.buttonText}}
+                @task={{this.save}}
+                @taskArgs={{hash dropdown=dd}}
+                @successText={{this.successText}}
+                @runningText={{this.runningText}}
+                @class="gh-btn gh-btn-black gh-publishmenu-button gh-btn-icon"
+                data-test-publishmenu-save=true
+            />
+        </footer>
+    </dd.Content>
+</GhBasicDropdown>
+
+{{#if this.showEmailConfirmationModal}}
+    <GhFullscreenModal
+        @modal="confirm-email-send"
+        @model={{hash
+            sendEmailWhenPublished=this.sendEmailWhenPublished
+            memberCount=this.memberCount
+            isScheduled=(eq this.saveType "schedule")
+            paidOnly=(eq this.post.visibility "paid")
+            retryEmailSend=this.retryEmailSend
+        }}
+        @confirm={{this.confirmEmailSend}}
+        @close={{this.closeEmailConfirmationModal}}
+        @modifier="action wide"
+    />
+{{/if}}

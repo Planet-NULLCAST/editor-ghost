@@ -1,0 +1,9 @@
+<div
+    {{did-insert (action "initScrollWatch")}}
+    {{will-destroy (action "clearScrollWatch")}}
+    ...attributes
+>
+    <header class="gh-canvas-header-content">
+        {{yield}}
+    </header>
+</div>
