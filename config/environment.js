@@ -1,9 +1,10 @@
 'use strict';
-
+require('dotenv').config();
 module.exports = function (environment) {
   let ENV = {
     modulePrefix: 'ember-quickstart',
     environment,
+    PARENT_URL: process.env.PARENT_URL,
     rootURL: '/',
     locationType: 'auto',
     EmberENV: {
