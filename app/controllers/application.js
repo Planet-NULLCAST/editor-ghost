@@ -147,19 +147,18 @@ export default Controller.extend({
         window.addEventListener('message', (event) => {
             console.log('message recieved', event.data);
             // console.log(this.post);
+            const target =
+                config.environment === 'development'
+                    ? 'http://localhost'
+                    : 'https://v2.nullcast.io';
+
             // IMPORTANT: check the origin of the data!
-            if (
-                event.isTrusted &&
-                event.origin.startsWith('http://localhost:3000')
-            ) {
+            if (event.isTrusted && event.origin.startsWith(target)) {
                 const message = event.data.msg;
 
                 if (message === 'savePost') {
                     // Dispatch a post message to the parent with the mobile doc
-                    window.parent.postMessage(
-                        { post: this.post },
-                        'http://localhost:3000'
-                    );
+                    window.parent.postMessage({ post: this.post }, target);
                 }
 
                 if (message === 'providePost') {
