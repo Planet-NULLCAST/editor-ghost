@@ -143,8 +143,9 @@ export default Controller.extend({
 
     init() {
         this._super();
+        console.log(config.PARENT_URL);
         window.addEventListener('message', (event) => {
-            const target = config.environment === config.PARENT_URL;
+            const target = config.PARENT_URL;
 
             // IMPORTANT: check the origin of the data!
             if (event.isTrusted && event.origin.startsWith(target)) {
