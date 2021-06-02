@@ -3,19 +3,19 @@ import boundOneWay from 'ember-quickstart/utils/bound-one-way';
 import config from 'ember-quickstart/config/environment';
 import isNumber from 'ember-quickstart/utils/isNumber';
 import moment from 'moment';
-import {action, computed} from '@ember/object';
-import {alias, mapBy} from '@ember/object/computed';
-import {capitalize} from '@ember/string';
-import {inject as controller} from '@ember/controller';
-import {get} from '@ember/object';
-import {htmlSafe} from '@ember/string';
-import {isBlank} from '@ember/utils';
-import {isArray as isEmberArray} from '@ember/array';
-import {isHostLimitError} from 'ember-quickstart/services/ajax';
-import {isInvalidError} from 'ember-ajax/errors';
-import {isVersionMismatchError} from 'ember-quickstart/services/ajax';
-import {inject as service} from '@ember/service';
-import {task, taskGroup, timeout} from 'ember-concurrency';
+import { action, computed } from '@ember/object';
+import { alias, mapBy } from '@ember/object/computed';
+import { capitalize } from '@ember/string';
+import { inject as controller } from '@ember/controller';
+import { get } from '@ember/object';
+import { htmlSafe } from '@ember/string';
+import { isBlank } from '@ember/utils';
+import { isArray as isEmberArray } from '@ember/array';
+import { isHostLimitError } from 'ember-quickstart/services/ajax';
+import { isInvalidError } from 'ember-ajax/errors';
+import { isVersionMismatchError } from 'ember-quickstart/services/ajax';
+import { inject as service } from '@ember/service';
+import { task, taskGroup, timeout } from 'ember-concurrency';
 
 const DEFAULT_TITLE = '(Untitled)';
 
@@ -30,9 +30,8 @@ let watchedProps = [
     'post.titleScratch',
     'post.hasDirtyAttributes',
     'post.tags.[]',
-    'post.isError'
+    'post.isError',
 ];
-
 
 const messageMap = {
     errors: {
@@ -40,20 +39,19 @@ const messageMap = {
             published: {
                 published: 'Update failed',
                 draft: 'Saving failed',
-                scheduled: 'Scheduling failed'
+                scheduled: 'Scheduling failed',
             },
             draft: {
                 published: 'Publish failed',
                 draft: 'Saving failed',
-                scheduled: 'Scheduling failed'
+                scheduled: 'Scheduling failed',
             },
             scheduled: {
                 scheduled: 'Update failed',
                 draft: 'Unscheduling failed',
-                published: 'Publish failed'
-            }
-
-        }
+                published: 'Publish failed',
+            },
+        },
     },
 
     success: {
@@ -61,20 +59,20 @@ const messageMap = {
             published: {
                 published: 'Updated',
                 draft: 'Saved',
-                scheduled: 'Scheduled'
+                scheduled: 'Scheduled',
             },
             draft: {
                 published: 'Published',
                 draft: 'Saved',
-                scheduled: 'Scheduled'
+                scheduled: 'Scheduled',
             },
             scheduled: {
                 scheduled: 'Updated',
                 draft: 'Unscheduled',
-                published: 'Published'
-            }
-        }
-    }
+                published: 'Published',
+            },
+        },
+    },
 };
 
 export default Controller.extend({
@@ -132,7 +130,7 @@ export default Controller.extend({
         },
         set(key, value) {
             return value;
-        }
+        },
     }),
 
     _snippets: computed(function () {
@@ -140,8 +138,41 @@ export default Controller.extend({
     }),
 
     snippets: computed('_snippets.@each.isNew', function () {
-        return this._snippets.reject(snippet => snippet.get('isNew'));
+        return this._snippets.reject((snippet) => snippet.get('isNew'));
     }),
+
+    init() {
+        this._super();
+
+        window.addEventListener('message', (event) => {
+            console.log('message recieved', event.data);
+            // console.log(this.post);
+            // IMPORTANT: check the origin of the data!
+            if (
+                event.isTrusted &&
+                event.origin.startsWith('http://localhost:3000')
+            ) {
+                const message = event.data.msg;
+
+                if (message === 'savePost') {
+                    // Dispatch a post message to the parent with the mobile doc
+                    window.parent.postMessage(
+                        { post: this.post },
+                        'http://localhost:3000'
+                    );
+                }
+
+                if (message === 'providePost') {
+                    this.setPost(event.data.post);
+                }
+            } else {
+                // The data was NOT sent from your site!
+                // Be careful! Do not use it. This else branch is
+                // here just for clarity, you usually shouldn't need it.
+                return;
+            }
+        });
+    },
 
     // canManageSnippets: computed('session.user.{isOwnerOrAdmin,isEditor}', function () {
     //     let {user} = this.session;
@@ -151,12 +182,16 @@ export default Controller.extend({
     //     return false;
     // }),
 
-    _autosaveRunning: computed('_autosave.isRunning', '_timedSave.isRunning', function () {
-        let autosave = this.get('_autosave.isRunning');
-        let timedsave = this.get('_timedSave.isRunning');
+    _autosaveRunning: computed(
+        '_autosave.isRunning',
+        '_timedSave.isRunning',
+        function () {
+            let autosave = this.get('_autosave.isRunning');
+            let timedsave = this.get('_timedSave.isRunning');
 
-        return autosave || timedsave;
-    }),
+            return autosave || timedsave;
+        }
+    ),
 
     _canAutosave: computed('post.isDraft', function () {
         return config.environment !== 'test' && this.get('post.isDraft');
@@ -166,19 +201,19 @@ export default Controller.extend({
 
     actions: {
         updateScratch(mobiledoc) {
-            console.log('from application', mobiledoc)
+            // console.log('from application', mobiledoc);
 
             // this.uploadStarted();
 
-            this.set('post', {scratch: mobiledoc});
+            this.set('post', { scratch: mobiledoc });
 
             // save 3 seconds after last edit
-            this._autosave.perform();
+            // this._autosave.perform();
             // force save at 60 seconds
-            this._timedSave.perform();
+            // this._timedSave.perform();
         },
         updateTitleScratch(title) {
-            console.log(title)
+            // console.log(title);
             this.set('post.titleScratch', title);
         },
 
@@ -218,8 +253,10 @@ export default Controller.extend({
                 this.set('showLeaveEditorModal', false);
                 return;
             }
-            console.log('inside leave edirtor')
-            if (!leaveTransition || transition.targetName === leaveTransition.targetName) {
+            if (
+                !leaveTransition ||
+                transition.targetName === leaveTransition.targetName
+            ) {
                 this.set('leaveEditorTransition', transition);
 
                 // if a save is running, wait for it to finish then transition
@@ -241,9 +278,10 @@ export default Controller.extend({
 
                 // we genuinely have unsaved data, show the modal
                 if (this.post) {
-                    Object.assign(this._leaveModalReason, {status: this.post.status});
+                    Object.assign(this._leaveModalReason, {
+                        status: this.post.status,
+                    });
                 }
-                console.log('showing leave editor modal', this._leaveModalReason); // eslint-disable-line
                 this.set('showLeaveEditorModal', true);
             }
         },
@@ -253,7 +291,10 @@ export default Controller.extend({
             let transition = this.leaveEditorTransition;
 
             if (!transition) {
-                this.notifications.showAlert('Sorry, there was an error in the application. Please let the Ghost team know what happened.', {type: 'error'});
+                this.notifications.showAlert(
+                    'Sorry, there was an error in the application. Please let the Ghost team know what happened.',
+                    { type: 'error' }
+                );
                 return;
             }
 
@@ -290,7 +331,6 @@ export default Controller.extend({
         },
 
         setKoenigEditor(koenig) {
-            console.log('koenig editor', koenig)
             this._koenig = koenig;
 
             // remove any empty cards when displaying a draft post
@@ -303,13 +343,11 @@ export default Controller.extend({
         },
 
         updateWordCount(counts) {
-            console.log('word count', counts)
             this.set('wordCount', counts);
-        }
+        },
     },
 
     saveSnippet: action(function (snippet) {
-        console.log('snippet', snippet)
         // let snippetRecord = this.store.createRecord('snippet', snippet);
         // return snippetRecord.save().then(() => {
         //     this.notifications.closeAlerts('snippet.save');
@@ -342,11 +380,10 @@ export default Controller.extend({
 
     // separate task for autosave so that it doesn't override a manual save
     autosave: task(function* () {
-        console.log('save is runnning', this.get('save.isRunning'))
         if (!this.get('save.isRunning')) {
             return yield this.save.perform({
                 silent: true,
-                backgroundSave: true
+                backgroundSave: true,
             });
         }
     }).drop(),
@@ -354,7 +391,6 @@ export default Controller.extend({
     // save tasks cancels autosave before running, although this cancels the
     // _xSave tasks  that will also cancel the autosave task
     save: task(function* (options = {}) {
-        console.log('options', this.get('post.scratch'))
         let prevStatus = this.get('post.status');
         let isNew = this.get('post.isNew');
         let status;
@@ -370,7 +406,10 @@ export default Controller.extend({
             status = 'draft';
         } else {
             if (this.get('post.pastScheduledTime')) {
-                status = (!this.willSchedule && !this.willPublish) ? 'draft' : 'published';
+                status =
+                    !this.willSchedule && !this.willPublish
+                        ? 'draft'
+                        : 'published';
             } else {
                 if (this.willPublish && !this.get('post.isScheduled')) {
                     status = 'published';
@@ -384,8 +423,15 @@ export default Controller.extend({
             // let the adapter know it should use the `?email_recipient_filter` QP when saving
             let isPublishing = status === 'published' && !this.post.isPublished;
             let isScheduling = status === 'scheduled' && !this.post.isScheduled;
-            if (options.sendEmailWhenPublished && (isPublishing || isScheduling)) {
-                options.adapterOptions = Object.assign({}, options.adapterOptions, {sendEmailWhenPublished: options.sendEmailWhenPublished});
+            if (
+                options.sendEmailWhenPublished &&
+                (isPublishing || isScheduling)
+            ) {
+                options.adapterOptions = Object.assign(
+                    {},
+                    options.adapterOptions,
+                    { sendEmailWhenPublished: options.sendEmailWhenPublished }
+                );
             }
         }
 
@@ -401,7 +447,10 @@ export default Controller.extend({
         // set mobiledoc equal to what's in the editor but create a copy so that
         // nested objects/arrays don't keep references which can mean that both
         // scratch and mobiledoc get updated simultaneously
-        this.set('post.mobiledoc', JSON.parse(JSON.stringify(this.post.scratch || null)));
+        this.set(
+            'post.mobiledoc',
+            JSON.parse(JSON.stringify(this.post.scratch || null))
+        );
         this.set('post.status', status);
 
         // Set a default title
@@ -414,11 +463,17 @@ export default Controller.extend({
         this.set('post.footerInjection', this.get('post.footerExcerptScratch'));
         this.set('post.headerInjection', this.get('post.headerExcerptScratch'));
         this.set('post.metaTitle', this.get('post.metaTitleScratch'));
-        this.set('post.metaDescription', this.get('post.metaDescriptionScratch'));
+        this.set(
+            'post.metaDescription',
+            this.get('post.metaDescriptionScratch')
+        );
         this.set('post.ogTitle', this.get('post.ogTitleScratch'));
         this.set('post.ogDescription', this.get('post.ogDescriptionScratch'));
         this.set('post.twitterTitle', this.get('post.twitterTitleScratch'));
-        this.set('post.twitterDescription', this.get('post.twitterDescriptionScratch'));
+        this.set(
+            'post.twitterDescription',
+            this.get('post.twitterDescriptionScratch')
+        );
         this.set('post.emailSubject', this.get('post.emailSubjectScratch'));
 
         if (!this.get('post.slug')) {
@@ -430,37 +485,43 @@ export default Controller.extend({
         try {
             // let post = yield this._savePost.perform(options);
 
-            const url = 'http://localhost:8080/api/post/save-post'
+            const url = 'http://localhost:8080/api/post/save-post';
 
             let ajax = this.ajax;
             // debounce(savePost, 3000)
 
             // save post to somewhere
-            const mobiledoc = this.get('post.scratch')
+            const mobiledoc = this.get('post.scratch');
             function savePost() {
-
                 const ajaxOptions = {
                     contentType: 'application/json',
-                    data: { mobiledoc }
-                }
-                ajax.post(url, ajaxOptions).then((response) => {
-                    console.log(response)
-                    // this._uploadSuccess(response);
-                }).catch((error) => {
-                    console.log(error)
-                    // this._uploadFailed(error);
-                }).finally(() => {
-                    // this.uploadFinished();
-                });
+                    data: { mobiledoc },
+                };
+                ajax.post(url, ajaxOptions)
+                    .then((response) => {
+                        console.log(response);
+                        // this._uploadSuccess(response);
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        // this._uploadFailed(error);
+                    })
+                    .finally(() => {
+                        // this.uploadFinished();
+                    });
             }
 
-            savePost()
+            savePost();
 
             // post.set('statusScratch', null);
 
             if (!options.silent) {
                 this.set('showPostPreviewModal', false);
-                this._showSaveNotification(prevStatus, post.get('status'), isNew ? true : false);
+                this._showSaveNotification(
+                    prevStatus,
+                    post.get('status'),
+                    isNew ? true : false
+                );
             }
 
             // redirect to edit route if saving a new record
@@ -491,7 +552,11 @@ export default Controller.extend({
 
             if (!options.silent) {
                 let errorOrMessages = error || this.get('post.errors.messages');
-                this._showErrorAlert(prevStatus, this.get('post.status'), errorOrMessages);
+                this._showErrorAlert(
+                    prevStatus,
+                    this.get('post.status'),
+                    errorOrMessages
+                );
                 // simulate a validation error for upstream tasks
                 throw undefined;
             }
@@ -574,8 +639,8 @@ export default Controller.extend({
     // convenience method for saving the post and performing post-save cleanup
     _savePost: task(function* (options) {
         // const post = this.get('post')
-        let {post} = this;
-        console.log(post)
+        let { post } = this;
+        console.log(post);
         // yield post.save(options);
 
         // remove any unsaved tags
@@ -587,14 +652,19 @@ export default Controller.extend({
         // update the scratch property if it's `null` and we get a blank mobiledoc
         // back from the API - prevents "unsaved changes" modal on new+blank posts
         if (!post.scratch) {
-            post.set('scratch', JSON.parse(JSON.stringify(post.get('mobiledoc'))));
+            post.set(
+                'scratch',
+                JSON.parse(JSON.stringify(post.get('mobiledoc')))
+            );
         }
 
         // if the two "scratch" properties (title and content) match the post,
         // then it's ok to set hasDirtyAttributes to false
         // TODO: why is this necessary?
         let titlesMatch = post.get('titleScratch') === post.get('title');
-        let bodiesMatch = JSON.stringify(post.get('scratch')) === JSON.stringify(post.get('mobiledoc'));
+        let bodiesMatch =
+            JSON.stringify(post.get('scratch')) ===
+            JSON.stringify(post.get('mobiledoc'));
 
         if (titlesMatch && bodiesMatch) {
             this.set('hasDirtyAttributes', false);
@@ -617,7 +687,10 @@ export default Controller.extend({
 
         // generate a slug if a post is new and doesn't have a title yet or
         // if the title is still '(Untitled)'
-        if ((post.get('isNew') && !currentTitle) || currentTitle === DEFAULT_TITLE) {
+        if (
+            (post.get('isNew') && !currentTitle) ||
+            currentTitle === DEFAULT_TITLE
+        ) {
             yield this.generateSlug.perform();
         }
 
@@ -655,13 +728,19 @@ export default Controller.extend({
     // load supplementel data such as the members count in the background
     backgroundLoader: task(function* () {
         try {
-            let membersResponse = yield this.store.query('member', {limit: 1, filter: 'subscribed:true'});
-            this.set('memberCount', get(membersResponse, 'meta.pagination.total'));
+            let membersResponse = yield this.store.query('member', {
+                limit: 1,
+                filter: 'subscribed:true',
+            });
+            this.set(
+                'memberCount',
+                get(membersResponse, 'meta.pagination.total')
+            );
         } catch (error) {
             this.set('memberCount', 0);
         }
 
-        yield this.store.query('snippet', {limit: 'all'});
+        yield this.store.query('snippet', { limit: 'all' });
     }).restartable(),
 
     /* Public methods --------------------------------------------------------*/
@@ -696,11 +775,13 @@ export default Controller.extend({
         // dialog here instead of our custom modal
         window.onbeforeunload = () => {
             if (this.hasDirtyAttributes) {
-                return '==============================\n\n'
-                     + 'Hey there! It looks like you\'re in the middle of writing'
-                     + ' something and you haven\'t saved all of your content.'
-                     + '\n\nSave before you go!\n\n'
-                     + '==============================';
+                return (
+                    '==============================\n\n' +
+                    "Hey there! It looks like you're in the middle of writing" +
+                    " something and you haven't saved all of your content." +
+                    '\n\nSave before you go!\n\n' +
+                    '=============================='
+                );
             }
         };
     },
@@ -711,7 +792,6 @@ export default Controller.extend({
     // the "are you sure?" modal
     willTransition(transition) {
         let post = this.post;
-        console.log('inside wiltransition')
         // exit early and allow transition if we have no post, occurs if reset
         // has already been called as in the `leaveEditor` action
         if (!post) {
@@ -727,16 +807,22 @@ export default Controller.extend({
         }
 
         let hasDirtyAttributes = this.hasDirtyAttributes;
-        let state = post.getProperties('isDeleted', 'isSaving', 'hasDirtyAttributes', 'isNew');
+        let state = post.getProperties(
+            'isDeleted',
+            'isSaving',
+            'hasDirtyAttributes',
+            'isNew'
+        );
 
-        let fromNewToEdit = this.get('router.currentRouteName') === 'editor.new'
-            && transition.targetName === 'editor.edit'
-            && transition.intent.contexts
-            && transition.intent.contexts[0]
-            && transition.intent.contexts[0].id === post.get('id');
+        let fromNewToEdit =
+            this.get('router.currentRouteName') === 'editor.new' &&
+            transition.targetName === 'editor.edit' &&
+            transition.intent.contexts &&
+            transition.intent.contexts[0] &&
+            transition.intent.contexts[0].id === post.get('id');
 
-        let deletedWithoutChanges = state.isDeleted
-            && (state.isSaving || !state.hasDirtyAttributes);
+        let deletedWithoutChanges =
+            state.isDeleted && (state.isSaving || !state.hasDirtyAttributes);
 
         // controller is dirty and we aren't in a new->edit or delete->index
         // transition so show our "are you sure you want to leave?" modal
@@ -793,7 +879,6 @@ export default Controller.extend({
 
     // save 3 seconds after the last edit
     _autosave: task(function* () {
-        console.log('can auto save', this.get('post.isNew'))
         // if (!this._canAutosave) {
         //     return;
         // }
@@ -831,7 +916,10 @@ export default Controller.extend({
         // if the Adapter failed to save the post isError will be true
         // and we should consider the post still dirty.
         if (post.get('isError')) {
-            this._leaveModalReason = {reason: 'isError', context: post.errors.messages};
+            this._leaveModalReason = {
+                reason: 'isError',
+                context: post.errors.messages,
+            };
             return true;
         }
 
@@ -840,13 +928,19 @@ export default Controller.extend({
         let currentTags = (this._tagNames || []).join(', ');
         let previousTags = (this._previousTagNames || []).join(', ');
         if (currentTags !== previousTags) {
-            this._leaveModalReason = {reason: 'tags are different', context: {currentTags, previousTags}};
+            this._leaveModalReason = {
+                reason: 'tags are different',
+                context: { currentTags, previousTags },
+            };
             return true;
         }
 
         // titleScratch isn't an attr so needs a manual dirty check
         if (this.titleScratch !== this.title) {
-            this._leaveModalReason = {reason: 'title is different', context: {current: this.title, scratch: this.titleScratch}};
+            this._leaveModalReason = {
+                reason: 'title is different',
+                context: { current: this.title, scratch: this.titleScratch },
+            };
             return true;
         }
 
@@ -859,7 +953,10 @@ export default Controller.extend({
             let scratchJSON = JSON.stringify(scratch);
 
             if (scratchJSON !== mobiledocJSON) {
-                this._leaveModalReason = {reason: 'mobiledoc is different', context: {current: mobiledocJSON, scratch: scratchJSON}};
+                this._leaveModalReason = {
+                    reason: 'mobiledoc is different',
+                    context: { current: mobiledocJSON, scratch: scratchJSON },
+                };
                 return true;
             }
         }
@@ -870,17 +967,23 @@ export default Controller.extend({
             let changedAttributes = Object.keys(post.changedAttributes());
 
             if (changedAttributes.length) {
-                this._leaveModalReason = {reason: 'post.changedAttributes.length > 0', context: post.changedAttributes()};
+                this._leaveModalReason = {
+                    reason: 'post.changedAttributes.length > 0',
+                    context: post.changedAttributes(),
+                };
             }
             return changedAttributes.length ? true : false;
         }
 
         // we've covered all the non-tracked cases we care about so fall
         // back on Ember Data's default dirty attribute checks
-        let {hasDirtyAttributes} = post;
+        let { hasDirtyAttributes } = post;
 
         if (hasDirtyAttributes) {
-            this._leaveModalReason = {reason: 'post.hasDirtyAttributes === true', context: post.changedAttributes()};
+            this._leaveModalReason = {
+                reason: 'post.hasDirtyAttributes === true',
+                context: post.changedAttributes(),
+            };
         }
 
         return hasDirtyAttributes;
@@ -902,39 +1005,61 @@ export default Controller.extend({
             actions = `<a href="${path}" target="_blank">View ${type}</a>`;
         }
 
-        notifications.showNotification(message, {type: 'success', actions: (actions && actions.htmlSafe()), delayed});
+        notifications.showNotification(message, {
+            type: 'success',
+            actions: actions && actions.htmlSafe(),
+            delayed,
+        });
     },
 
     _showScheduledNotification(delayed) {
-        let {
+        let { publishedAtUTC, emailRecipientFilter, previewUrl } = this.post;
+        let publishedAtBlogTZ = moment.tz(
             publishedAtUTC,
-            emailRecipientFilter,
-            previewUrl
-        } = this.post;
-        let publishedAtBlogTZ = moment.tz(publishedAtUTC, this.settings.get('timezone'));
+            this.settings.get('timezone')
+        );
 
         let title = 'Scheduled';
         let description = ['Will be published'];
 
         if (emailRecipientFilter && emailRecipientFilter !== 'none') {
             description.push('and delivered to');
-            description.push(`<span><strong>${emailRecipientFilter} members</strong></span>`);
+            description.push(
+                `<span><strong>${emailRecipientFilter} members</strong></span>`
+            );
         }
 
-        description.push(`on <span><strong>${publishedAtBlogTZ.format('MMM Do')}</strong></span>`);
+        description.push(
+            `on <span><strong>${publishedAtBlogTZ.format(
+                'MMM Do'
+            )}</strong></span>`
+        );
 
-        description.push(`at <span><strong>${publishedAtBlogTZ.format('HH:mm')}</strong>`);
+        description.push(
+            `at <span><strong>${publishedAtBlogTZ.format('HH:mm')}</strong>`
+        );
         if (publishedAtBlogTZ.utcOffset() === 0) {
             description.push('(UTC)</span>');
         } else {
-            description.push(`(UTC${publishedAtBlogTZ.format('Z').replace(/([+-])0/, '$1').replace(/:00/, '')})</span>`);
+            description.push(
+                `(UTC${publishedAtBlogTZ
+                    .format('Z')
+                    .replace(/([+-])0/, '$1')
+                    .replace(/:00/, '')})</span>`
+            );
         }
 
         description = description.join(' ').htmlSafe();
 
-        let actions = `<a href="${previewUrl}" target="_blank">View Preview</a>`.htmlSafe();
+        let actions =
+            `<a href="${previewUrl}" target="_blank">View Preview</a>`.htmlSafe();
 
-        return this.notifications.showNotification(title, {description, actions, type: 'success', delayed});
+        return this.notifications.showNotification(title, {
+            description,
+            actions,
+            type: 'success',
+            delayed,
+        });
     },
 
     _showErrorAlert(prevStatus, status, error, delay) {
@@ -952,8 +1077,13 @@ export default Controller.extend({
             // This is here because validation errors are returned as an array
             // TODO: remove this once validations are fixed
             errorMessage = error[0];
-        } else if (error && error.payload && error.payload.errors && error.payload.errors[0].message) {
-            return this.notifications.showAPIError(error, {key: 'post.save'});
+        } else if (
+            error &&
+            error.payload &&
+            error.payload.errors &&
+            error.payload.errors[0].message
+        ) {
+            return this.notifications.showAPIError(error, { key: 'post.save' });
         } else {
             errorMessage = 'Unknown Error';
         }
@@ -961,7 +1091,10 @@ export default Controller.extend({
         message += `: ${errorMessage}`;
         message = htmlSafe(message);
 
-        notifications.showAlert(message, {type: 'error', delayed: delay, key: 'post.save'});
-    }
-
+        notifications.showAlert(message, {
+            type: 'error',
+            delayed: delay,
+            key: 'post.save',
+        });
+    },
 });
