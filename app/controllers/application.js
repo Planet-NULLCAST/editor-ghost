@@ -145,15 +145,22 @@ export default Controller.extend({
         this._super();
 
         window.addEventListener('message', (event) => {
-            console.log('message recieved', event.data);
+            console.log('environment', config.environment);
             // console.log(this.post);
             const target =
+                config.environment === 'development'
+                    ? 'http://localhost:3000'
+                    : 'https://v2.nullcast.io';
+
+            // Incase the next app is running on a different port
+            // In development env
+            const originOfData =
                 config.environment === 'development'
                     ? 'http://localhost'
                     : 'https://v2.nullcast.io';
 
             // IMPORTANT: check the origin of the data!
-            if (event.isTrusted && event.origin.startsWith(target)) {
+            if (event.isTrusted && event.origin.startsWith(originOfData)) {
                 const message = event.data.msg;
 
                 if (message === 'savePost') {
