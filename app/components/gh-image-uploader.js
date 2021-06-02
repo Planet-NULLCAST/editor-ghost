@@ -256,6 +256,7 @@ export default Component.extend({
     },
 
     generateRequest() {
+        console.log('trying to upload an image')
         let ajax = this.ajax;
         let formData = this.formData;
         let uploadUrl = this.uploadUrl;

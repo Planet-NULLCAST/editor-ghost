@@ -1,81 +1,8 @@
-// /* eslint-disable ghost/ember/alias-model-in-controller */
-// import Controller from '@ember/controller';
-// import {computed} from '@ember/object';
-// import {
-//     contrast,
-//     darkenToContrastThreshold,
-//     hexToRgb,
-//     lightenToContrastThreshold,
-//     rgbToHex
-// } from 'ember-quickstart/utils/color';
-// import {inject as service} from '@ember/service';
-
-// export default Controller.extend({
-//     billing: service(),
-//     customViews: service(),
-//     config: service(),
-//     dropdown: service(),
-//     feature: service(),
-//     router: service(),
-//     session: service(),
-//     settings: service(),
-//     ui: service(),
-
-//     showBilling: computed.reads('config.hostSettings.billing.enabled'),
-//     showNavMenu: computed('router.currentRouteName', 'session.{isAuthenticated,user.isFulfilled}', 'ui.isFullScreen', function () {
-//         let {router, session, ui} = this;
-
-//         // if we're in fullscreen mode don't show the nav menu
-//         if (ui.isFullScreen) {
-//             return false;
-//         }
-
-//         // we need to defer showing the navigation menu until the session.user
-//         // promise has fulfilled so that gh-user-can-admin has the correct data
-//         if (!session.isAuthenticated || !session.user.isFulfilled) {
-//             return false;
-//         }
-
-//         return (router.currentRouteName !== 'error404' || session.isAuthenticated)
-//                 && !router.currentRouteName.match(/(signin|signup|setup|reset)/);
-//     }),
-
-//     adjustedAccentColor: computed('settings.accentColor', 'feature.nightShift', function () {
-//         const accentColor = this.settings.get('accentColor');
-//         const nightShift = this.feature.get('nightShift');
-//         // hardcoded background colors because
-//         // grabbing color from .gh-main with getComputedStyle always returns #ffffff
-//         const backgroundColor = nightShift ? '#151719' : '#ffffff';
-
-//         const accentRgb = hexToRgb(accentColor);
-//         const backgroundRgb = hexToRgb(backgroundColor);
-
-//         // WCAG contrast. 1 = lowest contrast, 21 = highest contrast
-//         const accentContrast = contrast(backgroundRgb, accentRgb);
-
-//         if (accentContrast > 2) {
-//             return accentColor;
-//         }
-
-//         let adjustedAccentRgb = accentRgb;
-
-//         if (nightShift) {
-//             adjustedAccentRgb = lightenToContrastThreshold(accentRgb, backgroundRgb, 2);
-//         } else {
-//             adjustedAccentRgb = darkenToContrastThreshold(accentRgb, backgroundRgb, 2);
-//         }
-
-//         return rgbToHex(adjustedAccentRgb);
-//     })
-// });
-
-
 import Controller from '@ember/controller';
 import boundOneWay from 'ember-quickstart/utils/bound-one-way';
 import config from 'ember-quickstart/config/environment';
 import isNumber from 'ember-quickstart/utils/isNumber';
 import moment from 'moment';
-import { debounce } from '@ember/runloop';
 import {action, computed} from '@ember/object';
 import {alias, mapBy} from '@ember/object/computed';
 import {capitalize} from '@ember/string';
@@ -240,32 +167,10 @@ export default Controller.extend({
     actions: {
         updateScratch(mobiledoc) {
             console.log('from application', mobiledoc)
-            const url = 'http://localhost:8080/api/post/save-post'
 
-            debounce(savePost, 3000)
+            // this.uploadStarted();
 
-
-            let ajax = this.ajax;
-            function savePost() {
-
-                const ajaxOptions = {
-                    contentType: 'application/json',
-                    data: { mobiledoc }
-                }
-                ajax.post(url, ajaxOptions).then((response) => {
-                    console.log(response)
-                    // this._uploadSuccess(response);
-                }).catch((error) => {
-                    console.log(error)
-                    // this._uploadFailed(error);
-                }).finally(() => {
-                    // this.uploadFinished();
-                });
-            }
-
-        // this.uploadStarted();
-
-            // this.set('post.scratch', mobiledoc);
+            this.set('post', {scratch: mobiledoc});
 
             // save 3 seconds after last edit
             this._autosave.perform();
@@ -273,6 +178,7 @@ export default Controller.extend({
             this._timedSave.perform();
         },
         updateTitleScratch(title) {
+            console.log(title)
             this.set('post.titleScratch', title);
         },
 
@@ -312,7 +218,7 @@ export default Controller.extend({
                 this.set('showLeaveEditorModal', false);
                 return;
             }
-
+            console.log('inside leave edirtor')
             if (!leaveTransition || transition.targetName === leaveTransition.targetName) {
                 this.set('leaveEditorTransition', transition);
 
@@ -384,6 +290,7 @@ export default Controller.extend({
         },
 
         setKoenigEditor(koenig) {
+            console.log('koenig editor', koenig)
             this._koenig = koenig;
 
             // remove any empty cards when displaying a draft post
@@ -396,6 +303,7 @@ export default Controller.extend({
         },
 
         updateWordCount(counts) {
+            console.log('word count', counts)
             this.set('wordCount', counts);
         }
     },
@@ -434,6 +342,7 @@ export default Controller.extend({
 
     // separate task for autosave so that it doesn't override a manual save
     autosave: task(function* () {
+        console.log('save is runnning', this.get('save.isRunning'))
         if (!this.get('save.isRunning')) {
             return yield this.save.perform({
                 silent: true,
@@ -445,15 +354,16 @@ export default Controller.extend({
     // save tasks cancels autosave before running, although this cancels the
     // _xSave tasks  that will also cancel the autosave task
     save: task(function* (options = {}) {
+        console.log('options', this.get('post.scratch'))
         let prevStatus = this.get('post.status');
         let isNew = this.get('post.isNew');
         let status;
 
         this.send('cancelAutosave');
 
-        if (options.backgroundSave && !this.hasDirtyAttributes) {
-            return;
-        }
+        // if (options.backgroundSave && !this.hasDirtyAttributes) {
+        //     return;
+        // }
 
         if (options.backgroundSave) {
             // do not allow a post's status to be set to published by a background save
@@ -495,7 +405,7 @@ export default Controller.extend({
         this.set('post.status', status);
 
         // Set a default title
-        if (!this.get('post.titleScratch').trim()) {
+        if (!this.get('post.titleScratch')?.trim()) {
             this.set('post.titleScratch', DEFAULT_TITLE);
         }
 
@@ -518,9 +428,35 @@ export default Controller.extend({
         }
 
         try {
-            let post = yield this._savePost.perform(options);
+            // let post = yield this._savePost.perform(options);
 
-            post.set('statusScratch', null);
+            const url = 'http://localhost:8080/api/post/save-post'
+
+            let ajax = this.ajax;
+            // debounce(savePost, 3000)
+
+            // save post to somewhere
+            const mobiledoc = this.get('post.scratch')
+            function savePost() {
+
+                const ajaxOptions = {
+                    contentType: 'application/json',
+                    data: { mobiledoc }
+                }
+                ajax.post(url, ajaxOptions).then((response) => {
+                    console.log(response)
+                    // this._uploadSuccess(response);
+                }).catch((error) => {
+                    console.log(error)
+                    // this._uploadFailed(error);
+                }).finally(() => {
+                    // this.uploadFinished();
+                });
+            }
+
+            savePost()
+
+            // post.set('statusScratch', null);
 
             if (!options.silent) {
                 this.set('showPostPreviewModal', false);
@@ -637,9 +573,10 @@ export default Controller.extend({
 
     // convenience method for saving the post and performing post-save cleanup
     _savePost: task(function* (options) {
+        // const post = this.get('post')
         let {post} = this;
-
-        yield post.save(options);
+        console.log(post)
+        // yield post.save(options);
 
         // remove any unsaved tags
         // NOTE: `updateTags` changes `hasDirtyAttributes => true`.
@@ -774,7 +711,7 @@ export default Controller.extend({
     // the "are you sure?" modal
     willTransition(transition) {
         let post = this.post;
-
+        console.log('inside wiltransition')
         // exit early and allow transition if we have no post, occurs if reset
         // has already been called as in the `leaveEditor` action
         if (!post) {
@@ -856,9 +793,10 @@ export default Controller.extend({
 
     // save 3 seconds after the last edit
     _autosave: task(function* () {
-        if (!this._canAutosave) {
-            return;
-        }
+        console.log('can auto save', this.get('post.isNew'))
+        // if (!this._canAutosave) {
+        //     return;
+        // }
 
         // force an instant save on first body edit for new posts
         if (this.get('post.isNew')) {

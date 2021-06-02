@@ -56,27 +56,28 @@
           </button>
         </section>
       </header>
-          <GhKoenigEditor 
-            {{!-- @title={{readonly this.post.titleScratch}} --}}
-            @titlePlaceholder={{concat (capitalize this.post.displayName) " Title"}}
-            @onBodyChange={{action "updateScratch"}}
-            {{!-- @onTitleChange={{action "updateTitleScratch"}}
-            @onTitleBlur={{action (perform this.saveTitle)}}
-            @body={{readonly this.post.scratch}}
-            @bodyPlaceholder={{concat "Begin writing your " this.post.displayName "..."}}
-            @bodyAutofocus={{this.shouldFocusEditor}}
-            @headerOffset={{editor.headerHeight}}
-            @scrollContainerSelector=".gh-koenig-editor"
-            @scrollOffsetTopSelector=".gh-editor-header-small"
-            @scrollOffsetBottomSelector=".gh-mobile-nav-bar"
-            @onEditorCreated={{action "setKoenigEditor"}}
-            @onWordCountChange={{action "updateWordCount"}}
+      <GhKoenigEditor
+        @titlePlaceholder={{concat (capitalize this.post.displayName) ' Title'}}
+        @onBodyChange={{action 'updateScratch'}}
+        @bodyPlaceholder={{concat "Begin writing your " this.post.displayName "..."}}
+        @scrollContainerSelector=".gh-koenig-editor"
+        @scrollOffsetTopSelector=".gh-editor-header-small"
+        @scrollOffsetBottomSelector=".gh-mobile-nav-bar"
+        @onEditorCreated={{action "setKoenigEditor"}}
+        @headerOffset={{editor.headerHeight}}
+        @onWordCountChange={{action "updateWordCount"}}
+        @bodyAutofocus={{this.shouldFocusEditor}}
+        @onTitleChange={{action "updateTitleScratch"}}
+        @title={{readonly this.post.titleScratch}}
+        @body={{readonly this.post.scratch}}
+        {{!-- 
             @snippets={{this.snippets}}
             @saveSnippet={{if this.canManageSnippets this.saveSnippet}}
+            @onTitleBlur={{action (perform this.saveTitle)}}
             @deleteSnippet={{if this.canManageSnippets this.toggleDeleteSnippetModal}} --}}
-          />
+      />
 
-      <div
+      {{!-- <div
         id='ember94'
         class='gh-koenig-editor relative w-100 vh-100 overflow-x-hidden overflow-y-auto z-0 ember-view'
       ><div class='gh-koenig-editor-pane flex flex-column mih-100'>
@@ -88,9 +89,9 @@
             style='resize: none; height: 50px;'
           ></textarea>
 
-          {{!-- {{koenig-editor}}    --}}
-          {{!-- <KoenigEditor /> --}}
-          {{!-- <GhKoenigEditor /> --}}
+          {{koenig-editor}}   
+          <KoenigEditor />
+          <GhKoenigEditor />
 
         </div><div
           class='erd_scroll_detection_container erd_scroll_detection_container_animation_active'
@@ -131,7 +132,7 @@
               ></path><path
                 d='M19.5 10c0-2.629-.924-4.859-2.782-6.718C14.858 1.424 12.628.5 10 .5c-2.629 0-4.859.924-6.718 2.782C1.424 5.142.5 7.372.5 10c0 2.629.924 4.859 2.782 6.718C5.142 18.576 7.372 19.5 10 19.5c2.629 0 4.859-.924 6.718-2.782 1.858-1.86 2.782-4.09 2.782-6.718z'
               ></path></g></svg></a>
-      </div>
+      </div> --}}
 
     </section>
     <!---->

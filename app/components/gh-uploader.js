@@ -1,12 +1,12 @@
 import Component from '@ember/component';
 import EmberObject from '@ember/object';
 import ghostPaths from 'ember-quickstart/utils/ghost-paths';
-import {all, task} from 'ember-concurrency';
-import {get} from '@ember/object';
-import {isArray} from '@ember/array';
-import {isEmpty} from '@ember/utils';
-import {run} from '@ember/runloop';
-import {inject as service} from '@ember/service';
+import { all, task } from 'ember-concurrency';
+import { get } from '@ember/object';
+import { isArray } from '@ember/array';
+import { isEmpty } from '@ember/utils';
+import { run } from '@ember/runloop';
+import { inject as service } from '@ember/service';
 
 // TODO: this is designed to be a more re-usable/composable upload component, it
 // should be able to replace the duplicated upload logic in:
@@ -33,13 +33,13 @@ const UploadTracker = EmberObject.extend({
 
     init() {
         this._super(...arguments);
-        this.total = this.file && this.file.size || 0;
+        this.total = (this.file && this.file.size) || 0;
     },
 
-    update({loaded, total}) {
+    update({ loaded, total }) {
         this.total = total;
         this.loaded = loaded;
-    }
+    },
 });
 
 export default Component.extend({
@@ -87,7 +87,7 @@ export default Component.extend({
         this._uploadTrackers = [];
 
         if (!this.paramsHash) {
-            this.set('paramsHash', {purpose: 'image'});
+            this.set('paramsHash', { purpose: 'image' });
         }
     },
 
@@ -116,7 +116,7 @@ export default Component.extend({
         cancel() {
             this._reset();
             this.onCancel();
-        }
+        },
     },
 
     _setFiles(files) {
@@ -125,7 +125,9 @@ export default Component.extend({
         if (files && files !== this._files) {
             if (this.get('_uploadFiles.isRunning')) {
                 // eslint-disable-next-line
-                console.error('Adding new files whilst an upload is in progress is not supported.');
+                console.error(
+                    'Adding new files whilst an upload is in progress is not supported.'
+                );
             }
 
             this._files = files;
@@ -151,7 +153,7 @@ export default Component.extend({
             if (result === true) {
                 ok.push(file);
             } else {
-                errors.push({fileName: file.name, message: result});
+                errors.push({ fileName: file.name, message: result });
             }
         }
 
@@ -168,7 +170,7 @@ export default Component.extend({
     // expose the mime-type, we'll rely on the API for final validation
     _defaultValidator(file) {
         let extensions = this.extensions;
-        let [, extension] = (/(?:\.([^.]+))?$/).exec(file.name);
+        let [, extension] = /(?:\.([^.]+))?$/.exec(file.name);
 
         // if extensions is falsy exit early and accept all files
         if (!extensions) {
@@ -197,7 +199,7 @@ export default Component.extend({
         // once we drop IE11 support we should be able to use native for...of
         for (let i = 0; i < files.length; i += 1) {
             let file = files[i];
-            let tracker = UploadTracker.create({file});
+            let tracker = UploadTracker.create({ file });
 
             this._uploadTrackers.pushObject(tracker);
             uploads.push(this._uploadFile.perform(tracker, file, i));
@@ -217,56 +219,64 @@ export default Component.extend({
     _uploadFile: task(function* (tracker, file, index) {
         let ajax = this.ajax;
         let formData = this._getFormData(file);
-        let url = `${ghostPaths().apiRoot}${this.uploadUrl}`;
-
+        // let url = `${ghostPaths().apiRoot}${this.uploadUrl}`;
+        console.log('formdata', formData);
+        console.log(file);
         try {
+            const presignedUrl = yield ajax.post(
+                'https://n8o9asugsb.execute-api.us-east-1.amazonaws.com/dev/s3-presigned-url',
+                {
+                    data: JSON.stringify({
+                        stage: 'dev',
+                        fileName: file.name,
+                        id: '4243524wrtfsdf',
+                        category: 'posts',
+                        ContentType: file.type,
+                    }),
+                }
+            );
+            console.log('presigned url', presignedUrl);
             this.onUploadStart(file);
 
-            let response = yield ajax.post(url, {
-                data: formData,
-                processData: false,
-                contentType: false,
-                dataType: 'text',
-                xhr: () => {
-                    let xhr = new window.XMLHttpRequest();
+            try {
+                yield ajax.put(presignedUrl, {
+                    data: file,
+                    processData: false,
+                    contentType: false,
+                    xhr: () => {
+                        let xhr = new window.XMLHttpRequest();
+    
+                        xhr.upload.addEventListener(
+                            'progress',
+                            (event) => {
+                                run(() => {
+                                    tracker.update(event);
+                                    this._updateProgress();
+                                });
+                            },
+                            false
+                        );
+    
+                        return xhr;
+                    },
+                });
+            } catch (error) {
+                console.log(error)
+                if(error?.data?.message !== 'empty body')
+                    throw error
+            }
 
-                    xhr.upload.addEventListener('progress', (event) => {
-                        run(() => {
-                            tracker.update(event);
-                            this._updateProgress();
-                        });
-                    }, false);
-
-                    return xhr;
-                }
-            });
 
             // force tracker progress to 100% in case we didn't get a final event,
             // eg. when using mirage
-            tracker.update({loaded: file.size, total: file.size});
+            tracker.update({ loaded: file.size, total: file.size });
             this._updateProgress();
 
-            let uploadResponse;
-            let responseUrl;
-
-            try {
-                uploadResponse = JSON.parse(response);
-            } catch (e) {
-                if (!(e instanceof SyntaxError)) {
-                    throw e;
-                }
-            }
-
-            if (uploadResponse) {
-                let resource = get(uploadResponse, this.resourceName);
-                if (resource && isArray(resource) && resource[0]) {
-                    responseUrl = get(resource[0], 'url');
-                }
-            }
+            let responseUrl = presignedUrl.split('?')[0];
 
             let result = {
                 url: responseUrl,
-                fileName: file.name
+                fileName: file.name,
             };
 
             this.uploadUrls[index] = result;
@@ -275,25 +285,30 @@ export default Component.extend({
             return true;
         } catch (error) {
             // grab custom error message if present
-            let message = error.payload.errors && error.payload.errors[0].message || '';
-            let context = error.payload.errors && error.payload.errors[0].context || '';
+            console.log('eroor=>>', error.message);
+            // let message =
+            //     (error.payload.errors && error.payload.errors[0].message) || '';
+            // let context =
+            //     (error.payload.errors && error.payload.errors[0].context) || '';
 
             // fall back to EmberData/ember-ajax default message for error type
-            if (!message) {
-                message = error.message;
-            }
+            // if (!message) {
+                const message = error.message;
+            // }
 
             let result = {
                 message,
-                context,
-                fileName: file.name
+                context: '',
+                fileName: file.name,
             };
 
             // TODO: check for or expose known error types?
             this.errors.pushObject(result);
             this.onUploadFailure(result);
         }
-    }).maxConcurrency(MAX_SIMULTANEOUS_UPLOADS).enqueue(),
+    })
+        .maxConcurrency(MAX_SIMULTANEOUS_UPLOADS)
+        .enqueue(),
 
     // NOTE: this is necessary because the API doesn't accept direct file uploads
     _getFormData(file) {
@@ -316,8 +331,14 @@ export default Component.extend({
         }
 
         let trackers = this._uploadTrackers;
-        let totalSize = trackers.reduce((total, tracker) => total + tracker.get('total'), 0);
-        let uploadedSize = trackers.reduce((total, tracker) => total + tracker.get('loaded'), 0);
+        let totalSize = trackers.reduce(
+            (total, tracker) => total + tracker.get('total'),
+            0
+        );
+        let uploadedSize = trackers.reduce(
+            (total, tracker) => total + tracker.get('loaded'),
+            0
+        );
 
         this.set('totalSize', totalSize);
         this.set('uploadedSize', uploadedSize);
@@ -328,6 +349,10 @@ export default Component.extend({
 
         let uploadPercentage = Math.round((uploadedSize / totalSize) * 100);
         this.set('uploadPercentage', uploadPercentage);
+
+        const uploadedperc = this.get('uploadPercentage')
+        console.log({uploadedperc})
+
     },
 
     _reset() {
@@ -337,5 +362,5 @@ export default Component.extend({
         this.set('uploadPercentage', 0);
         this.set('uploadUrls', []);
         this._uploadTrackers = [];
-    }
+    },
 });

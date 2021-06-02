@@ -113,5 +113,7 @@
   "ember": {
     "edition": "octane"
   },
-  "dependencies": {}
+  "dependencies": {
+    "webpack": "^5.38.0"
+  }
 }

@@ -214,6 +214,8 @@ let ajaxService = AjaxService.extend({
             return new EmailError(payload);
         } else if (this.isAcceptedResponse(status)) {
             return new AcceptedResponse(payload);
+        } else if(status == 200 && payload.message == "Unexpected end of JSON input") {
+            return new AcceptedResponse({message: 'empty body'});
         }
 
         let isGhostRequest = GHOST_REQUEST.test(request.url);
