@@ -174,7 +174,6 @@ let ajaxService = AjaxService.extend({
     },
 
     init() {
-        console.log('here inside ajax service')
         this._super(...arguments);
         if (this.isTesting === undefined) {
             this.isTesting = config.environment === 'test';

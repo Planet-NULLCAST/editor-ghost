@@ -63,7 +63,6 @@ export default Component.extend({
     loadActiveTheme: task(function* () {
         let store = this.store;
         let themes = yield store.peekAll('theme');
-        console.log('the htemese', themes)
         if (isEmpty(themes)) {
             themes = yield store.findAll('theme');
         }

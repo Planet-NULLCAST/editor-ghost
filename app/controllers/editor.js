@@ -243,7 +243,6 @@ export default Controller.extend({
                 if (this.post) {
                     Object.assign(this._leaveModalReason, {status: this.post.status});
                 }
-                console.log('showing leave editor modal', this._leaveModalReason); // eslint-disable-line
                 this.set('showLeaveEditorModal', true);
             }
         },

@@ -220,8 +220,6 @@ export default Component.extend({
         let ajax = this.ajax;
         let formData = this._getFormData(file);
         // let url = `${ghostPaths().apiRoot}${this.uploadUrl}`;
-        console.log('formdata', formData);
-        console.log(file);
         try {
             const presignedUrl = yield ajax.post(
                 'https://n8o9asugsb.execute-api.us-east-1.amazonaws.com/dev/s3-presigned-url',
@@ -235,7 +233,6 @@ export default Component.extend({
                     }),
                 }
             );
-            console.log('presigned url', presignedUrl);
             this.onUploadStart(file);
 
             try {
@@ -261,7 +258,6 @@ export default Component.extend({
                     },
                 });
             } catch (error) {
-                console.log(error)
                 if(error?.data?.message !== 'empty body')
                     throw error
             }

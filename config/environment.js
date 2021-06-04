@@ -5,6 +5,7 @@ module.exports = function (environment) {
     modulePrefix: 'ember-quickstart',
     environment,
     PARENT_URL: process.env.PARENT_URL,
+    API_URL: process.env.API_URL,
     rootURL: '/',
     locationType: 'auto',
     EmberENV: {

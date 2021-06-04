@@ -143,7 +143,6 @@ export default Controller.extend({
 
     init() {
         this._super();
-        console.log(config.PARENT_URL);
         window.addEventListener('message', (event) => {
             const target = config.PARENT_URL;
 
@@ -166,6 +165,13 @@ export default Controller.extend({
                 return;
             }
         });
+    },
+
+    willDestroyElement() {
+        this._super(...arguments);
+        window.removeEventListener("message", () =>
+        console.log("listener removed")
+      );
     },
 
     // canManageSnippets: computed('session.user.{isOwnerOrAdmin,isEditor}', function () {
@@ -195,7 +201,6 @@ export default Controller.extend({
 
     actions: {
         updateScratch(mobiledoc) {
-            // console.log('from application', mobiledoc);
 
             // this.uploadStarted();
 
@@ -207,7 +212,6 @@ export default Controller.extend({
             // this._timedSave.perform();
         },
         updateTitleScratch(title) {
-            // console.log(title);
             this.set('post.titleScratch', title);
         },
 
@@ -479,7 +483,7 @@ export default Controller.extend({
         try {
             // let post = yield this._savePost.perform(options);
 
-            const url = 'http://localhost:8080/api/post/save-post';
+            const url = `${config.API_URL}/api/post/save-post`;
 
             let ajax = this.ajax;
             // debounce(savePost, 3000)
