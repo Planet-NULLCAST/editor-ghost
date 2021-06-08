@@ -152,11 +152,19 @@ export default Controller.extend({
 
                 if (message === 'savePost') {
                     // Dispatch a post message to the parent with the mobile doc
-                    window.parent.postMessage({ post: this.post }, target);
+                    window.parent.postMessage({ post: this.post, title: this.post.titleScratch }, target);
                 }
 
                 if (message === 'providePost') {
-                    this.setPost(event.data.post);
+                    const post =event.data.post
+                    this.set('post', post);
+                    console.log(this.post);
+
+                    // need to set scratch values because they won't be present on first
+                    // edit of the post
+                    // TODO: can these be `boundOneWay` on the model as per the other attrs?
+                    this.post.titleScratch = post.title
+                    this.post.scratch = post.mobiledoc
                 }
             } else {
                 // The data was NOT sent from your site!
@@ -169,9 +177,9 @@ export default Controller.extend({
 
     willDestroyElement() {
         this._super(...arguments);
-        window.removeEventListener("message", () =>
-        console.log("listener removed")
-      );
+        window.removeEventListener('message', () =>
+            console.log('listener removed')
+        );
     },
 
     // canManageSnippets: computed('session.user.{isOwnerOrAdmin,isEditor}', function () {
@@ -201,7 +209,6 @@ export default Controller.extend({
 
     actions: {
         updateScratch(mobiledoc) {
-
             // this.uploadStarted();
 
             this.set('post', { scratch: mobiledoc });
@@ -735,10 +742,11 @@ export default Controller.extend({
                 get(membersResponse, 'meta.pagination.total')
             );
         } catch (error) {
+            console.log('error', error);
             this.set('memberCount', 0);
         }
 
-        yield this.store.query('snippet', { limit: 'all' });
+        // yield this.store.query('snippet', { limit: 'all' });
     }).restartable(),
 
     /* Public methods --------------------------------------------------------*/
@@ -757,15 +765,14 @@ export default Controller.extend({
 
         this.set('post', post);
         this.backgroundLoader.perform();
-
         // autofocus the editor if we have a new post
         this.set('shouldFocusEditor', post.get('isNew'));
 
         // need to set scratch values because they won't be present on first
         // edit of the post
         // TODO: can these be `boundOneWay` on the model as per the other attrs?
-        post.set('titleScratch', post.get('title'));
-        post.set('scratch', post.get('mobiledoc'));
+        this.post.set('titleScratch', post.get('title'));
+        this.post.set('scratch', post.get('mobiledoc'));
 
         this._previousTagNames = this._tagNames;
 
