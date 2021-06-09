@@ -143,7 +143,8 @@ export default Controller.extend({
 
     init() {
         this._super();
-        console.log('ember constructor')
+        console.log('ember constructor');
+        this.set('post', {})
         window.addEventListener('message', (event) => {
             const target = config.PARENT_URL;
 
@@ -213,7 +214,7 @@ export default Controller.extend({
     actions: {
         updateScratch(mobiledoc) {
             // this.uploadStarted();
-
+            console.log(this.post)
             this.set('post.scratch', mobiledoc);
 
             // save 3 seconds after last edit
