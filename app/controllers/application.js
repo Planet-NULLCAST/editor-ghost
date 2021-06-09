@@ -143,6 +143,7 @@ export default Controller.extend({
 
     init() {
         this._super();
+        console.log('ember constructor')
         window.addEventListener('message', (event) => {
             const target = config.PARENT_URL;
 
@@ -177,6 +178,8 @@ export default Controller.extend({
 
     willDestroyElement() {
         this._super(...arguments);
+        console.log('ember destructor')
+
         window.removeEventListener('message', () =>
             console.log('listener removed')
         );
@@ -211,7 +214,7 @@ export default Controller.extend({
         updateScratch(mobiledoc) {
             // this.uploadStarted();
 
-            this.set('post', { scratch: mobiledoc });
+            this.set('post.scratch', mobiledoc);
 
             // save 3 seconds after last edit
             // this._autosave.perform();
