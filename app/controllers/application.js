@@ -147,7 +147,6 @@ export default Controller.extend({
         this.set('post', {})
         window.addEventListener('message', (event) => {
             const target = config.PARENT_URL;
-
             // IMPORTANT: check the origin of the data!
             if (event.isTrusted && event.origin.startsWith(target)) {
                 const message = event.data.msg;
@@ -160,7 +159,7 @@ export default Controller.extend({
                 if (message === 'providePost') {
                     const post =event.data.post
                     this.set('post', post);
-                    console.log(this.post);
+                    this.set('postId', post.postId)
 
                     // need to set scratch values because they won't be present on first
                     // edit of the post
@@ -214,7 +213,6 @@ export default Controller.extend({
     actions: {
         updateScratch(mobiledoc) {
             // this.uploadStarted();
-            console.log(this.post)
             this.set('post.scratch', mobiledoc);
 
             // save 3 seconds after last edit
@@ -649,7 +647,6 @@ export default Controller.extend({
     _savePost: task(function* (options) {
         // const post = this.get('post')
         let { post } = this;
-        console.log(post);
         // yield post.save(options);
 
         // remove any unsaved tags

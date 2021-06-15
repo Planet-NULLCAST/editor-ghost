@@ -220,6 +220,7 @@ export default Component.extend({
         let ajax = this.ajax;
         let formData = this._getFormData(file);
         // let url = `${ghostPaths().apiRoot}${this.uploadUrl}`;
+        // const iframe = document.querySelector('iframe')
         try {
             const presignedUrl = yield ajax.post(
                 'https://n8o9asugsb.execute-api.us-east-1.amazonaws.com/dev/s3-presigned-url',
@@ -227,7 +228,7 @@ export default Component.extend({
                     data: JSON.stringify({
                         stage: 'dev',
                         fileName: file.name,
-                        id: '4243524wrtfsdf',
+                        id: this.postId,
                         category: 'posts',
                         ContentType: file.type,
                     }),

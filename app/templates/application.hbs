@@ -19,6 +19,7 @@
         @onTitleChange={{action "updateTitleScratch"}}
         @title={{readonly this.post.titleScratch}}
         @body={{readonly this.post.scratch}}
+        @postId={{this.postId}}
         
             {{!-- @snippets={{this.snippets}}
             @saveSnippet={{if this.canManageSnippets this.saveSnippet}}

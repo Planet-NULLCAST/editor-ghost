@@ -15,6 +15,7 @@
     @editor={{this.editor}}
     @onSelect={{action "didSelect"}}
     @onDeselect={{action "didDeselect"}}
+    @postId={{this.postId}}
     as |card|
 >
     <GhUploader
@@ -25,6 +26,7 @@
         @onUploadSuccess={{action "setImageSrc"}}
         @onUploadFailure={{action "uploadFailed"}}
         @onFailed={{action "handleErrors"}}
+        @postId={{this.postId}}
         as |uploader|
     >
         <div class="relative{{unless this.images " bg-whitegrey-l2"}}">

@@ -14,6 +14,7 @@
     @saveCard={{action this.saveCard}}
     @saveAsSnippet={{this.saveAsSnippet}}
     @editor={{this.editor}}
+    @postId={{this.postId}}
 >
     {{#if this.isEditing}}
         <GhEditor as |editor|>
@@ -63,6 +64,7 @@
                     @extensions={{editor.imageExtensions}}
                     @onComplete={{action editor.uploadComplete}}
                     @onCancel={{action editor.uploadCancelled}}
+                    @postId={{this.postId}}
                     as |upload|
                 >
                     <div class="gh-editor-image-upload {{if upload.errors "-error"}}">

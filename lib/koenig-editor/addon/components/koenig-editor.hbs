@@ -54,6 +54,7 @@
     @deleteSnippet={{this.deleteSnippet}}
     @replaceWithCardSection={{action "replaceWithCardSection"}}
     @replaceWithPost={{action "replaceWithPost"}}
+    @postId={{this.postId}}
 />
 
 {{!-- slash menu popup --}}
@@ -85,6 +86,7 @@
             selectCard=(action "selectCard" card)
             deselectCard=(action "deselectCard" card)
             editCard=(action "editCard" card)
+            postId=this.postId
             deleteCard=(action "deleteCard" card)
             saveAsSnippet=(if this.saveCardAsSnippetIfPossible (fn this.saveCardAsSnippetIfPossible card))
             moveCursorToPrevSection=(action "moveCursorToPrevSection" card)

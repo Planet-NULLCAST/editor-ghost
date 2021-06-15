@@ -13,6 +13,7 @@
     @moveCursorToPrevSection={{this.moveCursorToPrevSection}}
     @moveCursorToNextSection={{this.moveCursorToNextSection}}
     @editor={{this.editor}}
+    @postId={{this.postId}}
     as |card|
 >
     <GhUploader
@@ -22,6 +23,7 @@
         @onStart={{action "setPreviewSrc"}}
         @onComplete={{action "updateSrc"}}
         @onFailed={{action "resetSrcs"}}
+        @postId={{this.postId}}
         as |uploader|
     >
         <div class="relative{{unless (or this.previewSrc this.payload.src) " bg-whitegrey-l2"}}">
