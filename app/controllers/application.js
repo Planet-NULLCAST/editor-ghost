@@ -492,7 +492,7 @@ export default Controller.extend({
         try {
             // let post = yield this._savePost.perform(options);
 
-            const url = `${config.API_URL}/api/post/save-post`;
+            const url = `${config.API_URL}/post/save-post`;
 
             let ajax = this.ajax;
             // debounce(savePost, 3000)
